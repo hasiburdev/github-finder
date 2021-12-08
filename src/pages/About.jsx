@@ -12,7 +12,12 @@ const About = () => {
       </div>
       <div>
         <strong>repository: </strong>
-        <a className="text-blue-300" href="#" target="_blank">
+        <a
+          className="text-blue-300"
+          href="https://github.com/hasiburdev/github-finder"
+          target="_blank"
+          rel="noreferrer"
+        >
           GitHub
         </a>
       </div>
