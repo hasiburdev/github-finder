@@ -1,12 +1,14 @@
 import { createContext, useReducer } from "react";
 
-import { githubReducer } from "./githubReducer";
+import { githubReducer } from "./GithubReducer";
 
 export const GithubContext = createContext();
 
 export const GithubProvider = ({ children }) => {
   const initialState = {
     users: [],
+    user: {},
+    repos: [],
     isLoading: false,
   };
 
@@ -15,7 +17,7 @@ export const GithubProvider = ({ children }) => {
   const setLoading = () => dispatch({ type: "SET_LOADING" });
 
   // Loads initial users
-  const fetchUsers = async () => {
+  const getUsers = async () => {
     setLoading();
     try {
       const response = await fetch(
@@ -35,27 +37,59 @@ export const GithubProvider = ({ children }) => {
     } catch (error) {}
   };
 
-  // Search Users
-  const searchUsers = async (text) => {
+  // Get user repos
+  const getUserRepos = async (login) => {
+    setLoading();
+
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_GITHUB_URI}/users/${login}/repos`
+      );
+      const data = await response.json();
+      dispatch({
+        type: "GET_REPOS",
+        payload: data,
+      });
+    } catch (error) {}
+  };
+
+  // Get Sorted Repo List
+  const getSortedRepos = async (login) => {
     setLoading();
     const queryParam = new URLSearchParams({
-      q: text,
+      sort: "created",
+      per_page: 10,
     });
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_GITHUB_URI}/search/users?${queryParam}`,
-        {
-          headers: {
-            Authorization: `token ${process.env.REACT_APP_GITHUB_TOKEN}`,
-          },
-        }
+        `${process.env.REACT_APP_GITHUB_URI}/users/${login}/repos?${queryParam}`
       );
-      const { items } = await response.json();
+      const data = await response.json();
 
       dispatch({
-        type: "GET_USERS",
-        payload: items,
+        type: "GET_REPOS",
+        payload: data,
       });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // get Single User Data
+  const getUser = async (login) => {
+    setLoading();
+    try {
+      const response = await fetch(`https://api.github.com/users/${login}`);
+      if (response.status === 404) {
+        window.location = "/notfound";
+      } else {
+        const data = await response.json();
+
+        dispatch({
+          type: "GET_USER",
+          payload: data,
+        });
+      }
     } catch (error) {}
   };
 
@@ -66,16 +100,16 @@ export const GithubProvider = ({ children }) => {
     });
   };
 
-  const { users, isLoading } = state;
-
   return (
     <GithubContext.Provider
       value={{
-        users,
-        isLoading,
-        fetchUsers,
-        searchUsers,
+        ...state,
+        dispatch,
+        getUser,
+        getUsers,
         clearUsers,
+        getUserRepos,
+        getSortedRepos,
       }}
     >
       {children}
