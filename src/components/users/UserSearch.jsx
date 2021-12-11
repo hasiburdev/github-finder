@@ -16,6 +16,7 @@ const UserSearch = () => {
     if (text === "") {
       setAlert("Enter something to Search!", "error");
     } else {
+      dispatch({ type: "SET_LOADING" });
       const users = await searchUsers(text);
       dispatch({ type: "GET_USERS", payload: users });
       setText("");
